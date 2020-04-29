@@ -1,1 +1,1 @@
-# cmpmc
+# Controlled Mixture Population Monte Carlo
