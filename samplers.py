@@ -1,7 +1,10 @@
 import numpy as np
 import other_funcs
 from scipy.stats import multivariate_normal as mvn
+from tqdm import tqdm
 
+
+# Define a class for adaptive importance samplers with adaptive mixtures
 class MPMCSampler:
     def __init__(self, x, log_w, rho, mu, sigma, z_est, mu_est):
         self.particles = x
@@ -13,6 +16,7 @@ class MPMCSampler:
         self.target_mean = mu_est
 
 
+# Define a class for adaptive importance samplers which adapt the locations of a population of proposals
 class APISSampler:
     def __init__(self, x, log_w, mu, z_est, mu_est):
         self.particles = x
@@ -138,7 +142,7 @@ def cmpmc(log_target, d, D=10, M=50, I=200, K=5, var_prop=1, bounds=(-10, 10), a
     startd = 0
 
     # Loop for the algorithm
-    for i in range(I):
+    for i in tqdm(range(I)):
         # Update start counter
         stop = start + M
         stopd = startd + D
@@ -195,7 +199,7 @@ def cmpmc(log_target, d, D=10, M=50, I=200, K=5, var_prop=1, bounds=(-10, 10), a
             log_prop_z = np.log(prop_z)
             log_target_z = np.asarray([log_target(z_d)]).T
 
-            # PART 3: Compute the gradient of mixand weights, mean, and isotropic precision
+            # PART 3: Compute the gradient of mixand weights, mean, and  precision
             g_rho = 0                           # initialize gradient of mixand weight
             g_mu = np.zeros(d)                  # initialize gradient of mean
             g_prec = np.zeros((d, d))           # initialize gradient of precision matrix
@@ -303,7 +307,7 @@ def mpmc(log_target, d, D=10, M=50, I=200, var_prop=1, bounds=(-10, 10)):
     startd = 0
 
     # Loop for the algorithm
-    for i in range(I):
+    for i in tqdm(range(I)):
         # Update start counter
         stop = start + M
         stopd = startd + D
@@ -404,7 +408,7 @@ def apis(log_target, d, D=10, N=5, I=200, var_prop=1, bounds=(-10, 10)):
     startd = 0
 
     # Loop for the algorithm
-    for i in range(I):
+    for i in tqdm(range(I)):
         # Update start counter
         stop = start + M
         stopd = startd + D
@@ -505,13 +509,14 @@ def pimais(log_target, d, D=10, N=5, I=200, var_prop=1, bounds=(-10, 10), K=1):
     startd = 0
 
     # Loop for the algorithm
-    for i in range(I):
+    for i in tqdm(range(I)):
         # Update start counter
         stop = start + M
         stopd = startd + D
 
         # Generate particles
-        children = np.repeat(chain, N, axis=0)+np.sqrt(var_prop)*np.random.multivariate_normal(np.zeros(d), np.eye(d), M)
+        children = np.repeat(chain, N, axis=0)+np.sqrt(var_prop)*np.random.multivariate_normal(np.zeros(d),
+                                                                                               np.eye(d), M)
         particles[start:stop] = children
 
         # Compute log proposal
