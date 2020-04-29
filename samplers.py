@@ -77,7 +77,7 @@ def metropolis_hastings(log_target, initial_state, var_x=1, T=1000, burn_in=0, t
     return MCMCSampler(chain)
 
 
-def sgdmh_mpmc(log_target, d, D=10, M=50, I=200, K=5, var_prop=1, bounds=(-10, 10), alpha=2, eta_rho0=0,
+def cmpmc(log_target, d, D=10, M=50, I=200, K=5, var_prop=1, bounds=(-10, 10), alpha=2, eta_rho0=0,
                eta_mu0=1, eta_prec0=0.1, g_rho_max=0.1, g_mu_max=0.5, g_prec_max=0.25, Kthin=1, var_mcmc=1):
     """
     Runs the proposed controlled mixture population Monte Carlo algorithm
