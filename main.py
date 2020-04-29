@@ -1,6 +1,7 @@
+# Import necessary libraries
 import numpy as np
 import matplotlib.pyplot as plt
-import ais_lib_icassp2020 as ais
+import samplers as ais
 import multiprocessing
 from functools import partial
 
