@@ -1,6 +1,5 @@
 # Import necessary libraries
 import numpy as np
-from scipy.stats import multivariate_normal as mvn
 from numpy import linalg as la
 
 def function_contour(func_eval, xmin=-20, xmax=20, ymin=-20, ymax=20, delta=0.1):
@@ -30,6 +29,7 @@ def projection_simplex_sort(v, z=1):
     theta = cssv[cond][-1] / float(rho)
     w = np.maximum(v - theta, 0)
     return w
+
 
 def nearestPD(A):
     """Find the nearest positive-definite matrix to input
