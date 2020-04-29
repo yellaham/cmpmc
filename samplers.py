@@ -84,7 +84,7 @@ def metropolis_hastings(log_target, initial_state, var_x=1, T=1000, burn_in=0, t
 def cmpmc(log_target, d, D=10, M=50, I=200, K=5, var_prop=1, bounds=(-10, 10), alpha=2, eta_rho0=0,
                eta_mu0=1, eta_prec0=0.1, g_rho_max=0.1, g_mu_max=0.5, g_prec_max=0.25, Kthin=1, var_mcmc=1):
     """
-    Runs the proposed controlled mixture population Monte Carlo algorithm
+    Runs the controlled mixture population Monte Carlo algorithm
     :param log_target: Logarithm of the target distribution
     :param d: Dimension of the sampling space
     :param D: Number of mixture components
@@ -151,7 +151,7 @@ def cmpmc(log_target, d, D=10, M=50, I=200, K=5, var_prop=1, bounds=(-10, 10), a
         idx = np.random.choice(D, M, replace=True, p=rho)
         children = np.random.multivariate_normal(np.zeros(d), np.eye(d), M)
         for j in range(D):
-            children[idx==j] = mu[j]+np.matmul(children[idx == j], np.linalg.cholesky(sig[j]).T)
+            children[idx == j] = mu[j]+np.matmul(children[idx == j], np.linalg.cholesky(sig[j]).T)
         particles[start:stop] = children
 
         # Compute log proposal
@@ -270,25 +270,25 @@ def mpmc(log_target, d, D=10, M=50, I=200, var_prop=1, bounds=(-10, 10)):
     :param D: Number of proposals
     :param M: Number of samples to draw
     :param I: Number of iterations
-    :param var_prop: Variance of each proposal distribution
+    :param var_prop: Initial variance of each proposal distribution
     :param bounds: Prior to generate location parameters over [bounds]**d hypercube
-    :return particles, weights, and estimate of normalizing constant
+    :return MPMCSampler object
     """
     # Initialize the weights of the mixture proposal
-    rho = np.ones(D) / D
+    rho = np.ones(D)/D
 
     # Initialize the means of the mixture proposal
     mu = np.random.uniform(bounds[0], bounds[1], (D, d))
 
     # Initialize the covariances of the mixture proposal
-    sig = np.tile(var_prop * np.eye(d), (D, 1, 1))
+    sig = np.tile(var_prop*np.eye(d), (D, 1, 1))
 
     # Initialize storage of particles and log weights
-    particles = np.zeros((M * I, d))
-    log_weights = np.ones(M * I) * (-np.inf)
-    mix_weights = np.zeros((I + 1, D))
-    means = np.zeros((D * (I + 1), d))
-    covariances = np.tile(np.zeros((d, d)), (D * (I + 1), 1, 1))
+    particles = np.zeros((M*I, d))
+    log_weights = np.ones(M*I)*(-np.inf)
+    mix_weights = np.zeros((I+1, D))
+    means = np.zeros((D*(I+1), d))
+    covariances = np.tile(np.zeros((d, d)), (D*(I + 1), 1, 1))
 
     # Set initial locations to be the parents
     mix_weights[0, :] = rho
@@ -313,13 +313,13 @@ def mpmc(log_target, d, D=10, M=50, I=200, var_prop=1, bounds=(-10, 10)):
         idx = np.random.choice(D, M, replace=True, p=rho)
         children = np.random.multivariate_normal(np.zeros(d), np.eye(d), M)
         for j in range(D):
-            children[idx == j] = mu[j] + np.matmul(children[idx == j], np.linalg.cholesky(sig[j]).T)
+            children[idx == j] = mu[j]+np.matmul(children[idx == j], np.linalg.cholesky(sig[j]).T)
         particles[start:stop] = children
 
         # Compute log proposal
         prop = np.zeros(M)
         for j in range(D):
-            prop += rho[j] * mvn.pdf(children, mean=mu[j, :], cov=sig[j, :, :], allow_singular=True)
+            prop += rho[j] * mvn.pdf(children, mean=mu[j], cov=sig[j], allow_singular=True)
         log_prop = np.log(prop)
 
         # Compute log weights and store
@@ -341,16 +341,16 @@ def mpmc(log_target, d, D=10, M=50, I=200, var_prop=1, bounds=(-10, 10)):
 
         # Adapt the parameters of the proposal distribution
         for j in range(D):
-            # Compute the Rao-Blackwellization factor
+            # Compute the RB factor
             alpha = rho[j] * mvn.pdf(children, mean=mu[j, :], cov=sig[j, :, :]) / prop + 1e-6
             # Update the weight
             rho[j] = np.sum(w * alpha)
             # Compute normalized weights
-            wn = w * alpha / rho[j]
+            wn = w*alpha/rho[j]
             # Update the proposal mean
-            mu[j, :] = np.average(children, axis=0, weights=wn)
-            # Update the proposal covariance
-            sig[j, :, :] = np.cov(children, rowvar=0, bias=True, aweights=wn) + 1e-6 * np.eye(d)
+            mu[j] = np.average(children, axis=0, weights=wn)
+            # Update the proposal covariance (add small number to ensure positive definiteness)
+            sig[j] = np.cov(children, rowvar=False, bias=True, aweights=wn) + 1e-6 * np.eye(d)
 
         # Add small number to weights and normalize
         rho = rho / np.sum(rho)
@@ -380,7 +380,7 @@ def apis(log_target, d, D=10, N=5, I=200, var_prop=1, bounds=(-10, 10)):
     :param I: Number of iterations
     :param var_prop: Variance of each proposal distribution
     :param bounds: Prior to generate location parameters over [bounds]**d hypercube
-    :return particles, weights, and estimate of normalizing constant
+    :return APISSampler object
     """
     # Determine the total number of particles
     M = D*N
@@ -469,7 +469,7 @@ def apis(log_target, d, D=10, N=5, I=200, var_prop=1, bounds=(-10, 10)):
 
 def pimais(log_target, d, D=10, N=5, I=200, var_prop=1, bounds=(-10, 10), K=1):
     """
-    Runs the population Monte Carlo algorithm
+    Runs the parallel interacting Markov adaptive importance sampling algorithm
     :param log_target: Logarithm of the target distribution
     :param d: Dimension of the sampling space
     :param D: Number of proposals
@@ -478,7 +478,7 @@ def pimais(log_target, d, D=10, N=5, I=200, var_prop=1, bounds=(-10, 10), K=1):
     :param K: Number of MCMC steps
     :param var_prop: Variance of each proposal distribution
     :param bounds: Prior to generate location parameters over [bounds]**d hypercube
-    :return particles, weights, and estimate of normalizing constant
+    :return APISSampler object
     """
     # Determine the total number of particles
     M = D*N
